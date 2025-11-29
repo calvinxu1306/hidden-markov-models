@@ -235,18 +235,15 @@ By combining these two views, we can later compute how likely it is to have been
 
 ### 2.3 Mathematical Formulation
 
-For each time $t = 1, \dots, T$ and state $i = 1, \dots, N$, define the backward variable
-$$
+For each time $t = 1, \dots, T$ and state $i = 1, \dots, N$, define the backward variable $$
 \beta_t(i) = P(o_{t+1}, o_{t+2}, \dots, o_T \mid X_t = i,\; \lambda),
-$$
-the probability of observing the **future** observations from time $t+1$ to $T$, given that the hidden state at time $t$ is $i$.
+$$ the probability of observing the **future** observations from time $t+1$ to $T$, given that the hidden state at time $t$ is $i$.
 
 We compute $\beta_t(i)$ backwards in time.
 
 #### Initialization ($t = T$)
 
-At the final time $T$, there are no observations after $o_T$, so we set 
-$$
+At the final time $T$, there are no observations after $o_T$, so we set $$
 \beta_T(i) = 1, \quad i = 1, \dots, N.
 $$
 
@@ -283,21 +280,18 @@ This value should be **identical** to the likelihood computed by the forward alg
 We can summarize the backward algorithm as follows.
 
 1.  **Initialization**:\
-    For each state $i = 1, \dots, N$: 
-    $$
+    For each state $i = 1, \dots, N$: $$
     \beta_T(i) \leftarrow 1.
     $$
 
 2.  **Recursion** (for $t = T-1, \dots, 1$):\
-    For each state $i = 1, \dots, N$: 
-    $$
+    For each state $i = 1, \dots, N$: $$
     \beta_t(i) \leftarrow
     \sum_{j=1}^{N} a_{i j} \, b_j(o_{t+1}) \, \beta_{t+1}(j).
     $$
 
 3.  **Likelihood**:\
-    Compute 
-    $$
+    Compute $$
     P(O \mid \lambda) \leftarrow
     \sum_{i=1}^{N} \pi_i \, b_i(o_1) \, \beta_1(i).
     $$
@@ -331,6 +325,7 @@ backward <- function(A, B, pi, obs) {
   list(beta = beta, likelihood = likelihood)
 }
 ```
+
 ### 2.6 Example: Evaluating the Toy HMM
 
 We now apply the backward algorithm to the simple HMM. The following R code computes the backward variables $\beta_t(i)$ and the likelihood $P(O \mid \lambda)$:
