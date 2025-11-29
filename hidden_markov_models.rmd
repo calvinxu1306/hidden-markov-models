@@ -15,44 +15,27 @@ header-includes:
 - \usepackage{setspace}\doublespacing
 ---
 
-```{=tex}
 \newpage 
 \tableofcontents 
 \newpage
-```
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-\newpage 
+\newpage
 
 # Introduction
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and 
-MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
+What is a Hidden Markov Model? Why does it matter? What problem does it solve? Why did you choose this topic?
 
+# Basic Theory of Hidden Markov Chains
 
-The rest of this project is as follows. In Section 2, we review some basic concepts. 
-In Section 3, we introduce the topic. In Section 4, we have an application and simualtion. 
-Section 5 provides conclusion and some closing remarks. 
-
-
-
-
-# Review of the Topic
-
-When you click the **Knit** button a document will be generated that includes both content as well 
-as the output of any embedded R code chunks within the document. You can embed an R code chunk like 
-this:
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r cars,comment=NA}
 summary(cars)
 ```
-
-
 
 You can also embed publication quality plots, for example:
 
@@ -60,32 +43,28 @@ You can also embed publication quality plots, for example:
 plot(pressure)
 ```
 
-
-
 ## Definitions and Examples
+
 Such as importance of longitudinal data analysis (separate age and cohort effect like in the effect of age on reading ability), different correlation structures, missing data, etc.
 
-
-
 ## Details of the topic
-This is a mathematical formua without formula number.
-$$h(x) = \frac{f(x)}{S(x)} = -\frac{d \log[S(x])}{\rm dx}$$
- 
- 
-This is how write a fomula and label it. 
-\begin{align}
+
+This is a mathematical formua without formula number. $$h(x) = \frac{f(x)}{S(x)} = -\frac{d \log[S(x])}{\rm dx}$$
+
+This is how write a fomula and label it. \begin{align}
 \label{eq2}
 S(x) = \exp[-H(x)] = \exp[-\int_0^x h(u) {\rm d}u]
 \end{align}
 
- 
+# Three Fundamental Problems
 
-# Application
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and 
-MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+## 1. Evaluation
 
+## 2. Decoding
 
+## 3. Learning
 
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 \begin{table}[!htp]
 \small
@@ -104,6 +83,62 @@ Method& {Est} (SE)    &{Est} (SE) \\    %  95\% CI \hspace{0.5cm}  95\% CI
 \end{center}
 \end{table}
 
-# Conclusion 
+# Algorithms for Hidden Markov Models
+
+## Notation and Model Setup
+
+We consider a HMM with:
+
+-   $N$ hidden states $X_t \in \{1, \dots, N\}$
+-   $M$ possible observation symbols $o_t \in \{1, \dots, M\}$
+-   Initial state distribution $\boldsymbol{\pi}=(\pi_1, \dots, \pi_N)$
+-   Transition matrix $A=(a_{ij})$, where $$
+    a_{ij}=P(X_t=j \mid X_{t-1}=i)
+    $$
+-   Emission matrix $B=(b_j(k))$, where $$
+    b_j(k)=P(o_t=k \mid X_t=j)
+    $$
+
+We denote an observed sequence by $O=(o_1, \dots, o_T)$ and the corresponding hidden state sequence by $X=(X_1, \dots, X_T)$.
+
+In the numerical examples below, we will use the following simple HMM (with $N=2$ states and $M=3$ observation symbols):
+
+```{r hmm-params, echo=TRUE} 
+# Transition matrix A (rows = from-state, cols = to-state) 
+A <- matrix(c(0.7, 0.3,
+              0.4, 0.6),
+            nrow = 2, byrow = TRUE)
+
+# Emission matrix B(rows = state, cols = observation symbol)
+
+B <- matrix(c(0.1, 0.4, 0.5, 
+              0.6, 0.3, 0.1), 
+            nrow = 2, byrow = TRUE)
+
+# Initial distribution pi
+
+pi <- c(0.6, 0.4)
+
+# Example observation sequence (coded as 1, 2, 3)
+
+obs <- c(1, 3, 2) 
+obs
+```
+
+## 1. Forward Algorithm
+
+## 2. Backward Algorithm
+
+## 3. Forward-Backward Algorithm
+
+## 4. Viterbi Algorithm
+
+## 5. Baum-Welch Algorithm
+
+# Computation for Hidden Markov Models
+
+# Applications
+
+# Conclusion
 
 # References
