@@ -31,31 +31,6 @@ What is a Hidden Markov Model? Why does it matter? What problem does it solve? W
 
 # Basic Theory of Hidden Markov Chains
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars,comment=NA}
-summary(cars)
-```
-
-You can also embed publication quality plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-## Definitions and Examples
-
-Such as importance of longitudinal data analysis (separate age and cohort effect like in the effect of age on reading ability), different correlation structures, missing data, etc.
-
-## Details of the topic
-
-This is a mathematical formua without formula number. $$h(x) = \frac{f(x)}{S(x)} = -\frac{d \log[S(x])}{\rm dx}$$
-
-This is how write a fomula and label it. \begin{align}
-\label{eq2}
-S(x) = \exp[-H(x)] = \exp[-\int_0^x h(u) {\rm d}u]
-\end{align}
-
 # Three Fundamental Problems
 
 ## 1. Evaluation
@@ -63,25 +38,6 @@ S(x) = \exp[-H(x)] = \exp[-\int_0^x h(u) {\rm d}u]
 ## 2. Decoding
 
 ## 3. Learning
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-\begin{table}[!htp]
-\small
-\caption{This is a caption.}
-\begin{center}
-\begin{tabular}{|c|cc|}
-\hline
-& {Placebo}   &  {Treatment}       \\ \cline{1-3}  
-Method& {Est} (SE)    &{Est} (SE) \\    %  95\% CI \hspace{0.5cm}  95\% CI 
-\hline
-\scriptsize{Method 1 } & ??? (???)     & ??? (???)      \\   %   (???, ???) \hspace{0.25cm} (???, ???)
-\scriptsize{Method 2}  &  ??? (???)     &  ??? (???)     \\  %  (???,  ???)  \hspace{0.25cm}  (???, ???)
-\hline
-\end{tabular}
-\label{tab: 2.3}
-\end{center}
-\end{table}
 
 # Algorithms for Hidden Markov Models
 
@@ -103,7 +59,7 @@ We denote an observed sequence by $O=(o_1, \dots, o_T)$ and the corresponding hi
 
 In the numerical examples below, we will use the following simple HMM (with $N=2$ states and $M=3$ observation symbols):
 
-```{r hmm-params, echo=TRUE} 
+```{r hmm-params, echo=TRUE}
 # Transition matrix A (rows = from-state, cols = to-state) 
 A <- matrix(c(0.7, 0.3,
               0.4, 0.6),
@@ -127,7 +83,267 @@ obs
 
 ## 1. Forward Algorithm
 
+### 1.1 Purpose (Evaluation Problem)
+
+The forward algorithm computes the likelihood of an observation sequence\
+$O = (o_1, o_2, \dots, o_T)$ under a given HMM $\lambda = (\boldsymbol{\pi}, A, B)$, that is $$
+P(O \mid \lambda).
+$$ This is known as the **evaluation problem** and it answers the question:
+
+> How well does this HMM explain the observed data?
+
+### 1.2 Intuition
+
+Because the hidden states $X_t$ are not observed, many different hidden state sequences $X = (X_1, \dots, X_T)$ could have produced the same observation sequence $O$. A naive approach would sum the probability over all possible hidden-state sequences, but the number of such sequences grows exponentially with $T$.
+
+The forward algorithm avoids this by using **dynamic programming**. At each time $t$, for each state $i$, we maintain a single quantity:
+
+> The probability of being in state $i$ at time $t$, **and** having generated the observations up to time $t$.
+
+This is the **forward variable**.
+
+### 1.3 Mathematical Formulation
+
+For each time $t = 1, \dots, T$ and state $i = 1, \dots, N$, define the forward variable $$
+\alpha_t(i) = P(o_1, o_2, \dots, o_t,\; X_t = i \mid \lambda).
+$$
+
+We can compute $\alpha_t(i)$ recursively in three steps.
+
+#### Initialization ($t = 1$)
+
+At time $t = 1$, $$
+\alpha_1(i) = \pi_i \, b_i(o_1), \quad i = 1, \dots, N,
+$$ where $\pi_i = P(X_1 = i)$ is the initial state probability and $b_i(o_1) = P(o_1 \mid X_1 = i)$ is the emission probability.
+
+#### Recursion ($t = 2, \dots, T$)
+
+For time $t = 2, \dots, T$ and each state $i = 1, \dots, N$, $$
+\alpha_t(i)
+= \left( \sum_{j=1}^{N} \alpha_{t-1}(j)\, a_{j i} \right) b_i(o_t),
+$$ where $a_{ji} = P(X_t = i \mid X_{t-1} = j)$ is the transition probability from state $j$ to state $i$.
+
+#### Termination
+
+After processing all $T$ observations, the likelihood of the entire sequence is $$
+P(O \mid \lambda) = \sum_{i=1}^{N} \alpha_T(i).
+$$
+
+### 1.4 Pseudocode
+
+We can summarize the forward algorithm as follows.
+
+1.  **Initialization**:\
+    For each state $i = 1, \dots, N$: $$
+    \alpha_1(i) \leftarrow \pi_i \, b_i(o_1).
+    $$
+
+2.  **Recursion**:\
+    For $t = 2, \dots, T$ and each state $i = 1, \dots, N$: $$
+    \alpha_t(i) \leftarrow
+    \left( \sum_{j=1}^{N} \alpha_{t-1}(j)\, a_{j i} \right) b_i(o_t).
+    $$
+
+3.  **Termination**:\
+    Compute the likelihood $$
+    P(O \mid \lambda) \leftarrow \sum_{i=1}^{N} \alpha_T(i).
+    $$
+
+### 1.5 R Implementation
+
+We now implement the forward algorithm in R as a function. This function assumes that the HMM parameters $A$, $B$, and $\boldsymbol{\pi}$, as well as the observation sequence `obs`, are already defined (as in the *Notation and Model Setup* section).
+
+```{r forward-func, echo=TRUE}
+forward <- function(A, B, pi, obs) {
+  N <- length(pi) # number of states
+  Tobs <- length(obs) # length of the observation sequence
+
+  # alpha[t, i] = alpha_t(i) 
+  alpha <- matrix(0, nrow = Tobs, ncol = N)
+
+  # 1. Initialization
+  alpha[1, ] <- pi * B[, obs[1]]
+
+  # 2. Recursion
+  for (t in 2:Tobs) {
+    for (i in 1:N) { 
+      alpha[t, i] <- sum(alpha[t - 1, ] * A[, i]) * B[i, obs[t]] 
+    } 
+  }
+
+  # 3. Termination: likelihood
+  likelihood <- sum(alpha[Tobs, ])
+  list(alpha = alpha, likelihood = likelihood) 
+}
+```
+
+### 1.6 Example: Evaluating the Toy HMM
+
+We now apply the forward algorithm to the simple HMM defined in the *Notation and Model Setup* section. The model has:
+
+-   $N = 2$ hidden states\
+-   $M = 3$ observation symbols\
+-   Transition matrix $A$\
+-   Emission matrix $B$\
+-   Initial distribution $\boldsymbol{\pi}$
+
+The observation sequence used is\
+$$
+O = (1,\, 3,\, 2).
+$$
+
+The following R code computes the forward variables $\alpha_t(i)$ and the likelihood $P(O \mid \lambda)$:
+
+```{r forward-example, echo=TRUE}
+res_forward <- forward(A, B, pi, obs)
+
+# Forward variables alpha_t(i)
+res_forward$alpha
+
+# Likelihood P(O | lambda)
+res_forward$likelihood
+```
+
 ## 2. Backward Algorithm
+
+### 2.1 Purpose (Support for Learning and Smoothing)
+
+The backward algorithm is a dynamic programming procedure that propagates information **from the end of the sequence to the beginning**. It is mainly used to:
+
+-   support **parameter learning** (Baum–Welch algorithm), and\
+-   compute **posterior probabilities** of hidden states (via the forward–backward algorithm).
+
+It provides an alternative way to compute the likelihood $P(O \mid
+\lambda)$ that is mathematically equivalent to the forward algorithm.
+
+### 2.2 Intuition
+
+While the forward algorithm answers:
+
+> “Given what I have seen so far, how probable is it to be in each state right now?”
+
+the backward algorithm answers:
+
+> “If I am in state $i$ at time $t$, how likely is it to generate **all the remaining future observations**?”
+
+So:
+
+-   **Forward** looks from left to right (past → present).\
+-   **Backward** looks from right to left (future → present).
+
+By combining these two views, we can later compute how likely it is to have been in each state at each time, given the entire observation sequence.
+
+### 2.3 Mathematical Formulation
+
+For each time $t = 1, \dots, T$ and state $i = 1, \dots, N$, define the backward variable
+$$
+\beta_t(i) = P(o_{t+1}, o_{t+2}, \dots, o_T \mid X_t = i,\; \lambda),
+$$
+the probability of observing the **future** observations from time $t+1$ to $T$, given that the hidden state at time $t$ is $i$.
+
+We compute $\beta_t(i)$ backwards in time.
+
+#### Initialization ($t = T$)
+
+At the final time $T$, there are no observations after $o_T$, so we set 
+$$
+\beta_T(i) = 1, \quad i = 1, \dots, N.
+$$
+
+This corresponds to the idea that “the probability of the empty sequence” is 1.
+
+#### Recursion ($t = T-1, \dots, 1$)
+
+For $t = T-1, T-2, \dots, 1$ and each state $i = 1, \dots, N$,
+
+$$
+\beta_t(i)
+= \sum_{j=1}^{N} a_{i j} \, b_j(o_{t+1}) \, \beta_{t+1}(j),
+$$
+
+where:
+
+-   $a_{i j} = P(X_{t+1} = j \mid X_t = i)$ is the transition probability from state $i$ to state $j$,
+-   $b_j(o_{t+1}) = P(o_{t+1} \mid X_{t+1} = j)$ is the emission probability of the next observation from state $j$,
+-   $\beta_{t+1}(j)$ is the backward variable at the next time step.
+
+#### Likelihood from Backward Variables
+
+At time $t = 1$, the overall likelihood of the observation sequence can be expressed in terms of $\beta_1(i)$ as
+
+$$
+P(O \mid \lambda)
+= \sum_{i=1}^{N} \pi_i \, b_i(o_1) \, \beta_1(i).
+$$
+
+This value should be **identical** to the likelihood computed by the forward algorithm.
+
+### 2.4 Pseudocode
+
+We can summarize the backward algorithm as follows.
+
+1.  **Initialization**:\
+    For each state $i = 1, \dots, N$: 
+    $$
+    \beta_T(i) \leftarrow 1.
+    $$
+
+2.  **Recursion** (for $t = T-1, \dots, 1$):\
+    For each state $i = 1, \dots, N$: 
+    $$
+    \beta_t(i) \leftarrow
+    \sum_{j=1}^{N} a_{i j} \, b_j(o_{t+1}) \, \beta_{t+1}(j).
+    $$
+
+3.  **Likelihood**:\
+    Compute 
+    $$
+    P(O \mid \lambda) \leftarrow
+    \sum_{i=1}^{N} \pi_i \, b_i(o_1) \, \beta_1(i).
+    $$
+
+### 2.5 R Implementation
+
+We now implement the backward algorithm in R. The function below returns both the matrix of backward variables $\beta_t(i)$ and the likelihood $P(O \mid \lambda)$ computed from the backward variables.
+
+```{r backward-func, echo=TRUE}
+backward <- function(A, B, pi, obs) {
+  N    <- length(pi)        # number of states
+  Tobs <- length(obs)       # length of the observation sequence
+  
+  # beta[t, i] = beta_t(i)
+  beta <- matrix(0, nrow = Tobs, ncol = N)
+  
+  # 1. Initialization
+  beta[Tobs, ] <- 1
+  
+  # 2. Recursion: t = T-1, ..., 1
+  if (Tobs >= 2) {
+    for (t in seq(Tobs - 1, 1, by = -1)) {
+      for (i in 1:N) {
+        beta[t, i] <- sum(A[i, ] * B[, obs[t + 1]] * beta[t + 1, ])
+      }
+    }
+  }
+  
+  # 3. Likelihood using beta_1(i)
+  likelihood <- sum(pi * B[, obs[1]] * beta[1, ])
+  list(beta = beta, likelihood = likelihood)
+}
+```
+### 2.6 Example: Evaluating the Toy HMM
+
+We now apply the backward algorithm to the simple HMM. The following R code computes the backward variables $\beta_t(i)$ and the likelihood $P(O \mid \lambda)$:
+
+```{r backward-example, echo=TRUE}
+res_backward <- backward(A, B, pi, obs)
+
+# Backward variables beta_t(i)
+res_backward$beta
+
+# Likelihood P(O | lambda)
+res_backward$likelihood
+```
 
 ## 3. Forward-Backward Algorithm
 
