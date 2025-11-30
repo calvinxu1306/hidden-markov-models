@@ -450,3 +450,8 @@ res_backward$likelihood
 # Conclusion
 
 # References
+Hughey, R., & Krogh, A. (1996). Hidden Markov models for sequence analysis: extension and analysis of the basic method. Bioinformatics, 12(2), 95-107.
+
+Eddy, S. R. (2004). What is a hidden Markov model?. Nature biotechnology, 22(10), 1315-1316.
+
+Schuster‐Böckler, B., & Bateman, A. (2007). An introduction to hidden Markov models. Current protocols in bioinformatics, 18(1), A-3A.
