@@ -747,25 +747,86 @@ bw_res$B      # Updated emission matrix
 bw_res$pi     # Updated initial distribution
 bw_res$loglik # Log-likelihood over iterations
 ```
-**Interpretation.**  
-The matrices shown (updated $A$, $B$, and $\pi$) are the parameter values after running several EM iterations. These represent the transition probabilities, emission probabilities, and initial state distribution that locally maximize the likelihood of the observation sequence under the HMM.
+
+**Interpretation.**  The matrices shown (updated $A$, $B$, and $\pi$) are the parameter values after running several EM iterations. These represent the transition probabilities, emission probabilities, and initial state distribution that locally maximize the likelihood of the observation sequence under the HMM.
 
 Because our dataset consists of only one short sequence, the updated parameters may appear extreme (very close to 0 or 1). This is expected behavior of maximum-likelihood estimation with limited data: the algorithm assigns nearly deterministic transitions and emissions to fit the small dataset as closely as possible.
 
-The log-likelihood values printed in `bw_res$loglik` show how the
-likelihood improves at each iteration and eventually stabilizes when the
-EM algorithm converges.
+The log-likelihood values printed in `bw_res$loglik` show how the likelihood improves at each iteration and eventually stabilizes when the EM algorithm converges.
 
 # Computation for Hidden Markov Models
 
 # Applications
 
+Hidden Markov Models have become a fundamental tool in any domain where the underlying process evolves over time but cannot be directly observed. Because HMMs naturally separate the **hidden state dynamics** from the **observable outputs**, they are widely used in areas involving temporal, sequential, or noisy data. Below are several representative applications.
+
+## 1. Speech Recognition
+
+One of the earliest and most influential uses of HMMs is in automatic speech recognition. The hidden states represent phonemes or sub-phonetic units, while the observations correspond to acoustic feature vectors. The forward, Viterbi, and Baum–Welch algorithms collectively allow a computer to decode the most likely spoken words given a sequence of noisy audio frames.
+
+## 2. Natural Language Processing
+
+HMMs are used in tasks where linguistic structure unfolds over time, including:
+
+-   Part-of-speech tagging\
+-   Named entity recognition\
+-   Language modeling\
+-   Sentence segmentation
+
+In these tasks, the hidden state often corresponds to a syntactic or semantic label, while the observed sequence consists of words.
+
+## 3. Bioinformatics and Computational Biology
+
+HMMs play a major role in analyzing DNA and protein sequences. Notable applications include:
+
+-   Gene prediction\
+-   Protein family identification (e.g., Pfam)\
+-   Detecting conserved genomic regions\
+-   Sequence alignment
+
+In this setting, the hidden states represent biological structure (exons, introns, motifs), while the observations are nucleotide or amino acid sequences.
+
+## 4. Finance and Economics
+
+HMMs are used to model latent market conditions such as:
+
+-   Bull/bear regimes\
+-   Volatility states\
+-   Hidden risk factors
+
+Observed variables may include returns, volume, or volatility measures. The model can capture transitions between economic conditions and helps in prediction, risk analysis, and asset allocation.
+
+## 5. Activity Recognition and Time-Series Modeling
+
+In engineering and data science, HMMs are applied to:
+
+-   Human activity recognition from sensors\
+-   Handwriting and gesture recognition\
+-   Fault detection in mechanical systems\
+-   Weather and climate modeling
+
+In each case, the observed measurements are noisy, while the underlying behavior or system state is latent.
+
 # Conclusion
+
+In this project, we explored Hidden Markov Models from both theoretical and computational perspectives. We began by defining the structure of an HMM, its hidden states, transition dynamics, and emission distribution, and introduced the three fundamental problems: evaluation, decoding, and learning.
+
+We then implemented the major algorithms that solve these problems:\
+- The **forward algorithm**, which computes the probability of an observation sequence.\
+- The **backward algorithm**, which complements the forward computation and is essential for parameter learning.\
+- The **Viterbi algorithm**, which identifies the single most likely hidden-state path.\
+- The **Baum–Welch algorithm**, an application of Expectation– Maximization (EM) that estimates the model parameters from data.
+
+Through numerical examples using a simple two-state HMM, we illustrated how each algorithm operates in practice and how quantities such as $\alpha_t(i)$, $\beta_t(i)$, $\gamma_t(i)$, and $\xi_t(i,j)$ provide insight into the model’s behavior. Although our dataset was intentionally small, the experiments highlighted important practical aspects of HMMs, including overfitting tendencies and the convergence behavior of EM.
+
+Hidden Markov Models remain one of the most widely used tools for modeling sequential data with latent structure. Their mathematical elegance, interpretability, and compatibility with probabilistic inference make them foundational in fields ranging from speech and language to biology and finance. Through both theory and computation, this project demonstrated how HMMs provide a unified framework for understanding and analyzing complex temporal phenomena.
 
 # References
 
+Eddy, S. R. (2004). What is a hidden Markov model?. Nature biotechnology, 22(10), 1315-1316.
+
 Hughey, R., & Krogh, A. (1996). Hidden Markov models for sequence analysis: extension and analysis of the basic method. Bioinformatics, 12(2), 95-107.
 
-Eddy, S. R. (2004). What is a hidden Markov model?. Nature biotechnology, 22(10), 1315-1316.
+Rabiner, L. R. (1989). A tutorial on hidden Markov models and selected applications in speech recognition. *Proceedings of the IEEE, 77*(2), 257–286.
 
 Schuster‐Böckler, B., & Bateman, A. (2007). An introduction to hidden Markov models. Current protocols in bioinformatics, 18(1), A-3A.
