@@ -47,6 +47,51 @@ By combining mathematical reasoning with practical computation, this project sho
 
 # Basic Theory of Hidden Markov Chains
 
+A Hidden Markov Model can be thought of as a regular Markov chain, except that the states are not directly visible. 
+Instead, we only get to see some observations that are produced by these hidden states. 
+To understand where the model comes from, it helps to first recall what a Markov chain is. A Markov chain is a sequence of random variables
+$X_1, X_2, \ldots , X_T$
+that satisfies the **Markov property**:
+
+$$P(X_{t+1}=j \mid X_t=i, X_{t-1},\ldots,X_1) = P(X_{t+1}=j \mid X_t=i).$$
+
+This means that once we know the current state, anything further in the past does not matter for predicting the future states.
+The chain has a finite set of states,$$ S=\{1,2,\ldots,N\},$$ and a transition matrix $$ A = [a_{ij}], \qquad a_{ij} = P(X_{t+1}=j \mid X_t=i),$$
+with each row's summation to one. This gives the full dynamics of a standard Markov chain.
+
+What makes an HMM different is that we cannot observe $X_t$ directly. Instead, each hidden state produces an observable output. Let the set of all possible observations be $$ V=\{v_1, v_2, \ldots, v_M\}, $$ and let $$ b_j(k) = P(O_t = v_k \mid X_t = j)$$
+represent the chance of seeing symbol $v_k$ when the chain is in hidden state $j$. The model also requires an initial distribution
+$$ \pi_i = P(X_1 = i),$$ with $$ \sum_{i=1}^N \pi_i = 1.$$ 
+Together, the parameters of an HMM are written as
+$$ \lambda = (A, B, \pi). $$
+
+Two assumptions are essential for the model to work properly:
+
+1. **State transitions follow the Markov property**,  
+   meaning the hidden states themselves evolve like a first-order Markov chain:
+   $$
+   P(X_{t+1} \mid X_t, X_{t-1},\ldots) = P(X_{t+1} \mid X_t).
+   $$
+
+2. **Observations depend only on the current hidden state**,  
+   not on previous observations or states:
+   $$ 
+   P(O_t \mid X_1,\ldots,X_T, O_1,\ldots,O_{t-1} = P(O_t \mid X_t).
+   $$
+
+Under these assumptions, the joint probability of observing a particular hidden-state path
+$X = (x_1,\ldots,x_T)$ together with an observation sequence $O = (O_1,\ldots,O_T)$
+can be written in a very structured way:
+$$
+P(X,O \mid \lambda)
+= \pi_{x_1} b_{x_1}(O_1)
+  \prod_{t=2}^{T} a_{x_{t-1},x_t} \, b_{x_t}(O_t).
+$$
+
+This factorization is important because it avoids dealing with all $N^T$ possible state paths. It also explains why dynamic programming (like the Forward–Backward and Viterbi algorithms) works so well for HMMs.
+
+HMMs are popular mainly because this setup gives enough structure to make inference possible, even though the true states are hidden. Many real-world systems—biological, financial, or communication-related—naturally fit into this framework, which is the reason why the model appears in so many applications.
+
 # Three Fundamental Problems
 
 ## 1. Evaluation
