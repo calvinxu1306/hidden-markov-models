@@ -27,62 +27,41 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-Hidden Markov Models (HMMs) are useful tools in stochastic modeling, especially when we study data that change over time but come from processes we cannot directly observe. Many real systems work this way. 
-Examples include DNA sequences, financial trends, communication signals, and spoken language. In these situations, we only see the outcomes, while the actual states that generate them remain hidden. 
-Because the observations may also contain noise, HMMs provide a structured and mathematical way to describe how such systems behave. With their combination of probability ideas and efficient algorithms, HMMs have become widely used for analyzing sequential data.
+Hidden Markov Models (HMMs) are useful tools in stochastic modeling, especially when we study data that change over time but come from processes we cannot directly observe. Many real systems work this way. Examples include DNA sequences, financial trends, communication signals, and spoken language. In these situations, we only see the outcomes, while the actual states that generate them remain hidden. Because the observations may also contain noise, HMMs provide a structured and mathematical way to describe how such systems behave. With their combination of probability ideas and efficient algorithms, HMMs have become widely used for analyzing sequential data.
 
 The idea behind an HMM comes from the Markov property, which says that the next state of a system depends only on its current state. Rabiner’s well-known 1989 paper helped define the modern framework by clearly separating the hidden Markov chain from the emission process that produces the observations. Thinking about HMMs in this way leads to three key questions:
 
-1:How likely is a given sequence of observations?
-2:Which hidden states most likely produced the sequence?
-3:How can we learn the model parameters from data alone?
+1:How likely is a given sequence of observations? 2:Which hidden states most likely produced the sequence? 3:How can we learn the model parameters from data alone?
 
 These questions correspond to the Forward–Backward algorithm, the Viterbi method, and the Baum–Welch procedure.
 
 # Project Overview
 
-In this project, we study HMMs from both theoretical and computational perspectives. We begin by defining the model structure and explaining the three main inference problems. 
-After discussing the theory, we introduce the algorithms that solve these problems. We then use R to run simulations, estimate the model parameters, and recover the hidden states. 
-By combining mathematical reasoning with practical computation, this project shows how HMMs can reveal hidden patterns in sequential data and why they are an important tool in stochastic process analysis.
+In this project, we study HMMs from both theoretical and computational perspectives. We begin by defining the model structure and explaining the three main inference problems. After discussing the theory, we introduce the algorithms that solve these problems. We then use R to run simulations, estimate the model parameters, and recover the hidden states. By combining mathematical reasoning with practical computation, this project shows how HMMs can reveal hidden patterns in sequential data and why they are an important tool in stochastic process analysis.
 
 # Basic Theory of Hidden Markov Chains
 
-A Hidden Markov Model can be thought of as a regular Markov chain, except that the states are not directly visible. 
-Instead, we only get to see some observations that are produced by these hidden states. 
-To understand where the model comes from, it helps to first recall what a Markov chain is. A Markov chain is a sequence of random variables
-$X_1, X_2, \ldots , X_T$
-that satisfies the **Markov property**:
+A Hidden Markov Model can be thought of as a regular Markov chain, except that the states are not directly visible. Instead, we only get to see some observations that are produced by these hidden states. To understand where the model comes from, it helps to first recall what a Markov chain is. A Markov chain is a sequence of random variables $X_1, X_2, \ldots , X_T$ that satisfies the **Markov property**:
 
 $$P(X_{t+1}=j \mid X_t=i, X_{t-1},\ldots,X_1) = P(X_{t+1}=j \mid X_t=i).$$
 
-This means that once we know the current state, anything further in the past does not matter for predicting the future states.
-The chain has a finite set of states,$$ S=\{1,2,\ldots,N\},$$ and a transition matrix $$ A = [a_{ij}], \qquad a_{ij} = P(X_{t+1}=j \mid X_t=i),$$
-with each row's summation to one. This gives the full dynamics of a standard Markov chain.
+This means that once we know the current state, anything further in the past does not matter for predicting the future states. The chain has a finite set of states,$$ S=\{1,2,\ldots,N\},$$ and a transition matrix $$ A = [a_{ij}], \qquad a_{ij} = P(X_{t+1}=j \mid X_t=i),$$ with each row's summation to one. This gives the full dynamics of a standard Markov chain.
 
-What makes an HMM different is that we cannot observe $X_t$ directly. Instead, each hidden state produces an observable output. Let the set of all possible observations be $$ V=\{v_1, v_2, \ldots, v_M\}, $$ and let $$ b_j(k) = P(O_t = v_k \mid X_t = j)$$
-represent the chance of seeing symbol $v_k$ when the chain is in hidden state $j$. The model also requires an initial distribution
-$$ \pi_i = P(X_1 = i),$$ with $$ \sum_{i=1}^N \pi_i = 1.$$ 
-Together, the parameters of an HMM are written as
-$$ \lambda = (A, B, \pi). $$
+What makes an HMM different is that we cannot observe $X_t$ directly. Instead, each hidden state produces an observable output. Let the set of all possible observations be $$ V=\{v_1, v_2, \ldots, v_M\}, $$ and let $$ b_j(k) = P(O_t = v_k \mid X_t = j)$$ represent the chance of seeing symbol $v_k$ when the chain is in hidden state $j$. The model also requires an initial distribution $$ \pi_i = P(X_1 = i),$$ with $$ \sum_{i=1}^N \pi_i = 1.$$ Together, the parameters of an HMM are written as $$ \lambda = (A, B, \pi). $$
 
 Two assumptions are essential for the model to work properly:
 
-1. **State transitions follow the Markov property**,  
-   meaning the hidden states themselves evolve like a first-order Markov chain:
-   $$
-   P(X_{t+1} \mid X_t, X_{t-1},\ldots) = P(X_{t+1} \mid X_t).
-   $$
+1.  **State transitions follow the Markov property**,\
+    meaning the hidden states themselves evolve like a first-order Markov chain: $$
+    P(X_{t+1} \mid X_t, X_{t-1},\ldots) = P(X_{t+1} \mid X_t).
+    $$
 
-2. **Observations depend only on the current hidden state**,  
-   not on previous observations or states:
-   $$ 
-   P(O_t \mid X_1,\ldots,X_T, O_1,\ldots,O_{t-1} = P(O_t \mid X_t).
-   $$
+2.  **Observations depend only on the current hidden state**,\
+    not on previous observations or states: $$ 
+    P(O_t \mid X_1,\ldots,X_T, O_1,\ldots,O_{t-1} = P(O_t \mid X_t).
+    $$
 
-Under these assumptions, the joint probability of observing a particular hidden-state path
-$X = (x_1,\ldots,x_T)$ together with an observation sequence $O = (O_1,\ldots,O_T)$
-can be written in a very structured way:
-$$
+Under these assumptions, the joint probability of observing a particular hidden-state path $X = (x_1,\ldots,x_T)$ together with an observation sequence $O = (O_1,\ldots,O_T)$ can be written in a very structured way: $$
 P(X,O \mid \lambda)
 = \pi_{x_1} b_{x_1}(O_1)
   \prod_{t=2}^{T} a_{x_{t-1},x_t} \, b_{x_t}(O_t).
@@ -190,27 +169,7 @@ After processing all $T$ observations, the likelihood of the entire sequence is 
 P(O \mid \lambda) = \sum_{i=1}^{N} \alpha_T(i).
 $$
 
-### 1.4 Pseudocode
-
-We can summarize the forward algorithm as follows.
-
-1.  **Initialization**:\
-    For each state $i = 1, \dots, N$: $$
-    \alpha_1(i) \leftarrow \pi_i \, b_i(o_1).
-    $$
-
-2.  **Recursion**:\
-    For $t = 2, \dots, T$ and each state $i = 1, \dots, N$: $$
-    \alpha_t(i) \leftarrow
-    \left( \sum_{j=1}^{N} \alpha_{t-1}(j)\, a_{j i} \right) b_i(o_t).
-    $$
-
-3.  **Termination**:\
-    Compute the likelihood $$
-    P(O \mid \lambda) \leftarrow \sum_{i=1}^{N} \alpha_T(i).
-    $$
-
-### 1.5 R Implementation
+### 1.4 R Implementation
 
 We now implement the forward algorithm in R as a function. This function assumes that the HMM parameters $A$, $B$, and $\boldsymbol{\pi}$, as well as the observation sequence `obs`, are already defined (as in the *Notation and Model Setup* section).
 
@@ -238,22 +197,9 @@ forward <- function(A, B, pi, obs) {
 }
 ```
 
-### 1.6 Example: Evaluating the Toy HMM
+### 1.5 Example: Evaluating the Toy HMM
 
-We now apply the forward algorithm to the simple HMM defined in the *Notation and Model Setup* section. The model has:
-
--   $N = 2$ hidden states\
--   $M = 3$ observation symbols\
--   Transition matrix $A$\
--   Emission matrix $B$\
--   Initial distribution $\boldsymbol{\pi}$
-
-The observation sequence used is\
-$$
-O = (1,\, 3,\, 2).
-$$
-
-The following R code computes the forward variables $\alpha_t(i)$ and the likelihood $P(O \mid \lambda)$:
+We now apply the forward algorithm to the simple HMM defined in the *Notation and Model Setup* section. The following R code computes the forward variables $\alpha_t(i)$ and the likelihood $P(O \mid \lambda)$:
 
 ```{r forward-example, echo=TRUE}
 res_forward <- forward(A, B, pi, obs)
@@ -336,28 +282,7 @@ $$
 
 This value should be **identical** to the likelihood computed by the forward algorithm.
 
-### 2.4 Pseudocode
-
-We can summarize the backward algorithm as follows.
-
-1.  **Initialization**:\
-    For each state $i = 1, \dots, N$: $$
-    \beta_T(i) \leftarrow 1.
-    $$
-
-2.  **Recursion** (for $t = T-1, \dots, 1$):\
-    For each state $i = 1, \dots, N$: $$
-    \beta_t(i) \leftarrow
-    \sum_{j=1}^{N} a_{i j} \, b_j(o_{t+1}) \, \beta_{t+1}(j).
-    $$
-
-3.  **Likelihood**:\
-    Compute $$
-    P(O \mid \lambda) \leftarrow
-    \sum_{i=1}^{N} \pi_i \, b_i(o_1) \, \beta_1(i).
-    $$
-
-### 2.5 R Implementation
+### 2.4 R Implementation
 
 We now implement the backward algorithm in R. The function below returns both the matrix of backward variables $\beta_t(i)$ and the likelihood $P(O \mid \lambda)$ computed from the backward variables.
 
@@ -387,7 +312,7 @@ backward <- function(A, B, pi, obs) {
 }
 ```
 
-### 2.6 Example: Evaluating the Toy HMM
+### 2.5 Example: Evaluating the Toy HMM
 
 We now apply the backward algorithm to the simple HMM. The following R code computes the backward variables $\beta_t(i)$ and the likelihood $P(O \mid \lambda)$:
 
@@ -401,11 +326,156 @@ res_backward$beta
 res_backward$likelihood
 ```
 
-## 3. Forward-Backward Algorithm
+## 3. Viterbi Algorithm
 
-## 4. Viterbi Algorithm
+### 3.1 Purpose (Decoding Problem)
 
-## 5. Baum-Welch Algorithm
+The Viterbi algorithm solves the **decoding problem** for hidden Markov models:
+
+What is the single most likely sequence of hidden states $X = (X_1, X_2, \dots, X_T)$ that produced the observation sequence $O$?
+
+Unlike the forward algorithm (which sums over all paths), the Viterbi algorithm finds **one best path**: the most probable hidden state trajectory.
+
+### 3.2 Intuition
+
+Imagine driving with a GPS:
+
+-   There are many possible paths to your destination.
+-   The forward algorithm considers **all** possible routes.
+-   The Viterbi algorithm tries to find **the one best route**.
+
+Viterbi works by keeping track of:
+
+1.  The highest probability of any path ending in each state at each time. This is stored in a table called $$
+    \delta_t(i).
+    $$
+
+2.  The “backpointer” that records which previous state produced that maximum.\
+    This is stored in a table $$
+    \psi_t(i).
+    $$
+
+At the end, we trace backward through $\psi_t(i)$ to recover the most likely state path.
+
+### 3.3 Mathematical Formulation
+
+Define the **Viterbi variable**:
+
+$$
+\delta_t(i)
+= \max_{x_1,\dots,x_{t-1}}
+P(X_1=x_1,\dots,X_t=i,\,o_1,\dots,o_t \mid \lambda),
+$$
+
+the highest probability of any path that ends in state $i$ at time $t$ and generates observations up to $t$.
+
+We also define the **backpointer**:
+
+$$
+\psi_t(i)
+= \arg\max_j \left[ \delta_{t-1}(j) a_{ji} \right].
+$$
+
+#### Initialization ($t = 1$)
+
+$$
+\delta_1(i) = \pi_i \, b_i(o_1),
+\qquad
+\psi_1(i) = 0.
+$$
+
+#### Recursion ($t = 2,\dots,T$)
+
+$$
+\delta_t(i)
+=
+\max_{j=1,\dots,N} [\delta_{t-1}(j) a_{ji}]
+b_i(o_t),
+$$
+
+$$
+\psi_t(i)
+=
+\arg\max_{j=1,\dots,N} \left[ \delta_{t-1}(j) a_{ji} \right].
+$$
+
+#### Termination
+
+$$
+P^* = \max_{i} \delta_T(i),
+\qquad
+X_T^* = \arg\max_{i} \delta_T(i).
+$$
+
+#### Path backtracking
+
+For $t = T-1,\dots,1$:
+
+$$
+X_t^* = \psi_{t+1}(X_{t+1}^*).
+$$
+
+The resulting sequence $$
+(X_1^*, X_2^*, \dots, X_T^*)
+$$ is the most likely hidden-state path.
+
+### 3.4 R Implementation
+
+```{r viterbi-func, echo=TRUE}
+viterbi <- function(A, B, pi, obs) {
+  N    <- length(pi)
+  Tobs <- length(obs)
+  
+  delta <- matrix(0, nrow = Tobs, ncol = N)
+  psi   <- matrix(0, nrow = Tobs, ncol = N)
+  
+  # 1. Initialization
+  delta[1, ] <- pi * B[, obs[1]]
+  psi[1, ]   <- 0
+  
+  # 2. Recursion
+  for (t in 2:Tobs) {
+    for (i in 1:N) {
+      probs <- delta[t - 1, ] * A[, i]
+      psi[t, i]   <- which.max(probs)
+      delta[t, i] <- max(probs) * B[i, obs[t]]
+    }
+  }
+  
+  # 3. Termination
+  P_star <- max(delta[Tobs, ])
+  X_star <- numeric(Tobs)
+  X_star[Tobs] <- which.max(delta[Tobs, ])
+  
+  # 4. Backtracking
+  for (t in (Tobs - 1):1) {
+    X_star[t] <- psi[t + 1, X_star[t + 1]]
+  }
+  
+  list(path = X_star, probability = P_star,
+       delta = delta, psi = psi)
+}
+```
+
+### 3.5 Example: Most likely State Sequence in Toy HMM
+
+We now apply the Viterbi algorithm to the simple HMM.
+
+```{r viterbi-example, echo=TRUE}
+res_vit <- viterbi(A, B, pi, obs)
+
+# Most likely hidden state sequence
+res_vit$path
+
+# Probability of this path
+res_vit$probability
+
+# Delta and psi tables
+res_vit$delta
+res_vit$psi
+```
+
+## 4. Baum-Welch Algorithm
 
 # Computation for Hidden Markov Models
 
