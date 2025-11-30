@@ -72,47 +72,44 @@ This factorization is important because it avoids dealing with all $N^T$ possibl
 HMMs are popular mainly because this setup gives enough structure to make inference possible, even though the true states are hidden. Many real-world systems—biological, financial, or communication-related—naturally fit into this framework, which is the reason why the model appears in so many applications.
 
 # Three Fundamental Problems
+
 When working with a Hidden Markov Model, there are three central questions that come up almost immediately. These questions describe what we want to learn from the observation sequence, even though the underlying states are hidden.
+
 ## 1.How likely is a given sequence of observations?
-Suppose we observe a sequence
-$$
+
+Suppose we observe a sequence $$
 O = (O_1, O_2, \ldots, O_T).
-$$
-The first thing we often want to know is simply: *How likely is it that our model produced this sequence?*  
-This means we want to compute
-$$
+$$ The first thing we often want to know is simply: *How likely is it that our model produced this sequence?*\
+This means we want to compute $$
 P(O \mid \lambda).
 $$
 
-In theory, we could sum over every possible hidden-state path:
-$$
+In theory, we could sum over every possible hidden-state path: $$
 P(O \mid \lambda)
 = \sum_{x_1,\ldots,x_T}
 \pi_{x_1} b_{x_1}(O_1)
 \prod_{t=2}^{T} a_{x_{t-1},x_t} \, b_{x_t}(O_t).
 $$
 
-But this involves $N^T$ possibilities, which is basically impossible to compute for any reasonable $T$.  
+But this involves $N^T$ possibilities, which is basically impossible to compute for any reasonable $T$.\
 The **Forward algorithm** gives us a much faster way by using a recursive calculation instead of brute force.
 
 ## 2.Which hidden states most likely produced the sequence?
 
-Another common question is: *Given what we observed, which hidden states were most likely responsible?*  
-That is, we want a state sequence
-$$
-X^\* = \arg\max_X \, P(X \mid O, \lambda).
+Another common question is: *Given what we observed, which hidden states were most likely responsible?*\
+That is, we want a state sequence $$
+X^* = \arg\max_X \, P(X \mid O, \lambda).
 $$
 
 Rather than checking every path, the **Viterbi algorithm** works through the sequence step by step and tracks the best partial path as it goes. By the end, it gives us the most likely full sequence.
 
 ## 3.How can we learn the model parameters from data alone?
 
-If we only know $O$ but not the parameters $(A, B, \pi)$, then we want to estimate these in a way that makes the observed data as likely as possible. Formally,
-$$
-\lambda^\* = \arg\max_{\lambda} \, P(O \mid \lambda).
+If we only know $O$ but not the parameters $(A, B, \pi)$, then we want to estimate these in a way that makes the observed data as likely as possible. Formally, $$
+\lambda^* = \arg\max_{\lambda} \, P(O \mid \lambda).
 $$
 
-This is hard to do directly since the states are hidden.  
+This is hard to do directly since the states are hidden.\
 The **Baum–Welch algorithm** (an EM method) tackles this by alternating between estimating hidden-state probabilities and updating the parameters until things stop changing much.
 
 # Algorithms for Hidden Markov Models
@@ -495,7 +492,7 @@ viterbi <- function(A, B, pi, obs) {
 
 ### 3.5 Example: Most likely State Sequence in Toy HMM
 
-We now apply the Viterbi algorithm to the simple HMM.
+We now apply the Viterbi algorithm to the simple HMM. The following R code computes the most likely hidden state sequence and its probability, then the tables $\delta_t(i)$ and $\psi_t(i)$
 
 ```{r viterbi-example, echo=TRUE}
 res_vit <- viterbi(A, B, pi, obs)
@@ -513,6 +510,227 @@ res_vit$psi
 
 ## 4. Baum-Welch Algorithm
 
+### 4.1 Purpose (Learning Problem)
+
+So far, we have assumed that the HMM parameters $\lambda = (\boldsymbol{\pi}, A, B)$ are known.
+
+In practice, we often only observe a sequence $$
+O = (o_1, \dots, o_T)
+$$ and want to learn the parameters that best explain the data.
+
+The **Baum–Welch algorithm** is a special case of the Expectation–Maximization (EM) algorithm for HMMs. It iteratively updates $(\boldsymbol{\pi}, A, B)$ to (locally) maximize the likelihood $P(O \mid \lambda)$.
+
+### 4.2 Intuition
+
+Baum–Welch alternates between two steps:
+
+1.  **E-step (Expectation step)**\
+    Use the current parameters $\lambda$ to compute $$
+    \gamma_t(i) = P(X_t = i \mid O, \lambda)
+    $$ the posterior probability of being in state $i$ at time $t$ and $$
+    \xi_t(i,j) = P(X_t = i, X_{t+1} = j \mid O, \lambda)
+    $$ the posterior probability of transitioning from state $i$ to state $j$ between times $t$ and $t+1$.
+
+    These are computed using the **forward–backward algorithm**.
+
+2.  **M-step (Maximization step)**\
+    Treat $\gamma$ and $\xi$ as **soft counts** and update:
+
+    -   initial state distribution $\boldsymbol{\pi}$,
+    -   transition probabilities $A$,
+    -   emission probabilities $B$.
+
+This process is repeated until the likelihood stops changing significantly.
+
+### 4.3 Mathematical Formulation
+
+Let $\gamma_t(i)$ and $\xi_t(i,j)$ be defined as follows:
+
+$$
+\gamma_t(i)
+= P(X_t = i \mid O, \lambda),
+$$ $$
+\xi_t(i,j)
+= P(X_t = i, X_{t+1} = j \mid O, \lambda).
+$$
+
+The re-estimation formulas for a **single observation sequence** $O$ are:
+
+#### Initial distribution
+
+$$
+\pi_i^{\text{new}} = \gamma_1(i),
+$$ the probability of being in state $i$ at time $t = 1$.
+
+#### Transition probabilities
+
+$$
+a_{ij}^{\text{new}}
+=
+\frac{
+\sum_{t=1}^{T-1} \xi_t(i,j)
+}{
+\sum_{t=1}^{T-1} \gamma_t(i)
+}.
+$$
+
+-   Numerator: expected number of transitions from $i$ to $j$.\
+-   Denominator: expected total number of transitions out of state $i$.
+
+#### Emission probabilities (discrete observations)
+
+For each state $j$ and symbol $k \in \{1,\dots,M\}$,
+
+$$
+b_j^{\text{new}}(k)
+=
+\frac{
+\sum_{t: o_t = k} \gamma_t(j)
+}{
+\sum_{t=1}^{T} \gamma_t(j)
+}.
+$$
+
+-   Numerator: expected number of times state $j$ emitted symbol $k$.\
+-   Denominator: expected total number of times state $j$ was visited.
+
+These updates guarantee that at each iteration, the likelihood $P(O \mid \lambda)$ does not decrease (though it may converge to a local maximum).
+
+### 4.4 R Implementation (Single Sequence, Simple Version)
+
+Below is a simple implementation of Baum–Welch for **one** observation sequence.
+
+```{r baum-welch-func, echo=TRUE}
+baum_welch <- function(A, B, pi, obs, max_iter = 20, tol = 1e-6) {
+  N    <- length(pi)      # number of states
+  M    <- ncol(B)         # number of observation symbols
+  Tobs <- length(obs)     # length of observation sequence
+  
+  loglik_history <- numeric(max_iter)
+  
+  for (iter in 1:max_iter) {
+    
+    ## E-step: compute alpha, beta, gamma, xi
+    
+    # Forward and backward passes
+    fw <- forward(A, B, pi, obs)
+    bw <- backward(A, B, pi, obs)
+    
+    alpha <- fw$alpha          # T x N
+    beta  <- bw$beta           # T x N
+    lik   <- fw$likelihood     # P(O | lambda)
+    
+    loglik_history[iter] <- log(lik)
+    
+    # Gamma: posterior state probabilities
+    gamma <- matrix(0, nrow = Tobs, ncol = N)
+    for (t in 1:Tobs) {
+      denom <- sum(alpha[t, ] * beta[t, ])
+      gamma[t, ] <- (alpha[t, ] * beta[t, ]) / denom
+    }
+    
+    # Xi: posterior transition probabilities
+    xi <- array(0, dim = c(Tobs - 1, N, N))
+    for (t in 1:(Tobs - 1)) {
+      # unnormalized xi_t(i,j)
+      for (i in 1:N) {
+        for (j in 1:N) {
+          xi[t, i, j] <- alpha[t, i] *
+                         A[i, j] *
+                         B[j, obs[t + 1]] *
+                         beta[t + 1, j]
+        }
+      }
+      # normalize so sum_{i,j} xi_t(i,j) = 1
+      xi[t, , ] <- xi[t, , ] / sum(xi[t, , ])
+    }
+    
+    ## M-step: update pi, A, B using gamma and xi
+    
+    # Update pi: initial state distribution
+    pi_new <- gamma[1, ]
+    
+    # Update A: transition probabilities
+    A_new <- matrix(0, nrow = N, ncol = N)
+    for (i in 1:N) {
+      denom <- sum(gamma[1:(Tobs - 1), i])
+      if (denom > 0) {
+        for (j in 1:N) {
+          numer <- sum(xi[, i, j])
+          A_new[i, j] <- numer / denom
+        }
+      } else {
+        # fallback: keep old row if denom is zero
+        A_new[i, ] <- A[i, ]
+      }
+    }
+    
+    # Update B: emission probabilities (discrete)
+    B_new <- matrix(0, nrow = N, ncol = M)
+    for (j in 1:N) {
+      denom <- sum(gamma[, j])
+      if (denom > 0) {
+        for (k in 1:M) {
+          # times t where obs[t] equals symbol k
+          numer <- sum(gamma[obs == k, j])
+          B_new[j, k] <- numer / denom
+        }
+      } else {
+        B_new[j, ] <- B[j, ]
+      }
+    }
+    
+    ## Convergence check
+    
+    if (iter > 1) {
+      if (abs(loglik_history[iter] - loglik_history[iter - 1]) < tol) {
+        loglik_history <- loglik_history[1:iter]
+        return(list(A = A_new, B = B_new, pi = pi_new,
+                    loglik = loglik_history,
+                    iterations = iter))
+      }
+    }
+    
+    # Prepare for next iteration
+    A  <- A_new
+    B  <- B_new
+    pi <- pi_new
+  }
+  
+  # If max_iter reached without convergence
+  list(A = A, B = B, pi = pi,
+       loglik = loglik_history,
+       iterations = max_iter)
+}
+```
+
+### 4.5 Example: Baum-Welch Algorithm on Toy HMM
+
+We now apply the Baum-Welch algorithm to a slightly perturbed version of the simple HMM.The following R code initializes perturbed parameters and computes the updated transition matrix $A$, emission matrix $B$, initial distribution $\pi$, and the log-likelihood values across iterations
+
+```{r baum-welch-example, echo=TRUE}
+# Start from slightly perturbed parameters
+
+A_start <- A + matrix(runif(4, -0.05, 0.05), nrow=2)
+A_start <- A_start / rowSums(A_start)
+
+B_start <- B + matrix(runif(6, -0.05, 0.05), nrow=2)
+B_start <- B_start / rowSums(B_start)
+
+pi_start <- pi + runif(2, -0.05, 0.05)
+pi_start <- pi_start / sum(pi_start)
+
+# Apply Baum–Welch
+
+bw_res <- baum_welch(A_start, B_start, pi_start, obs,
+max_iter = 10, tol = 1e-8)
+
+bw_res$A      # Updated transition matrix
+bw_res$B      # Updated emission matrix
+bw_res$pi     # Updated initial distribution
+bw_res$loglik # Log-likelihood over iterations
+```
+
 # Computation for Hidden Markov Models
 
 # Applications
@@ -520,6 +738,7 @@ res_vit$psi
 # Conclusion
 
 # References
+
 Hughey, R., & Krogh, A. (1996). Hidden Markov models for sequence analysis: extension and analysis of the basic method. Bioinformatics, 12(2), 95-107.
 
 Eddy, S. R. (2004). What is a hidden Markov model?. Nature biotechnology, 22(10), 1315-1316.
