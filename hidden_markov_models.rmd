@@ -72,12 +72,48 @@ This factorization is important because it avoids dealing with all $N^T$ possibl
 HMMs are popular mainly because this setup gives enough structure to make inference possible, even though the true states are hidden. Many real-world systems—biological, financial, or communication-related—naturally fit into this framework, which is the reason why the model appears in so many applications.
 
 # Three Fundamental Problems
+When working with a Hidden Markov Model, there are three central questions that come up almost immediately. These questions describe what we want to learn from the observation sequence, even though the underlying states are hidden.
+## 1.How likely is a given sequence of observations?
+Suppose we observe a sequence
+$$
+O = (O_1, O_2, \ldots, O_T).
+$$
+The first thing we often want to know is simply: *How likely is it that our model produced this sequence?*  
+This means we want to compute
+$$
+P(O \mid \lambda).
+$$
 
-## 1. Evaluation
+In theory, we could sum over every possible hidden-state path:
+$$
+P(O \mid \lambda)
+= \sum_{x_1,\ldots,x_T}
+\pi_{x_1} b_{x_1}(O_1)
+\prod_{t=2}^{T} a_{x_{t-1},x_t} \, b_{x_t}(O_t).
+$$
 
-## 2. Decoding
+But this involves $N^T$ possibilities, which is basically impossible to compute for any reasonable $T$.  
+The **Forward algorithm** gives us a much faster way by using a recursive calculation instead of brute force.
 
-## 3. Learning
+## 2.Which hidden states most likely produced the sequence?
+
+Another common question is: *Given what we observed, which hidden states were most likely responsible?*  
+That is, we want a state sequence
+$$
+X^\* = \arg\max_X \, P(X \mid O, \lambda).
+$$
+
+Rather than checking every path, the **Viterbi algorithm** works through the sequence step by step and tracks the best partial path as it goes. By the end, it gives us the most likely full sequence.
+
+## 3.How can we learn the model parameters from data alone?
+
+If we only know $O$ but not the parameters $(A, B, \pi)$, then we want to estimate these in a way that makes the observed data as likely as possible. Formally,
+$$
+\lambda^\* = \arg\max_{\lambda} \, P(O \mid \lambda).
+$$
+
+This is hard to do directly since the states are hidden.  
+The **Baum–Welch algorithm** (an EM method) tackles this by alternating between estimating hidden-state probabilities and updating the parameters until things stop changing much.
 
 # Algorithms for Hidden Markov Models
 
@@ -484,3 +520,8 @@ res_vit$psi
 # Conclusion
 
 # References
+Hughey, R., & Krogh, A. (1996). Hidden Markov models for sequence analysis: extension and analysis of the basic method. Bioinformatics, 12(2), 95-107.
+
+Eddy, S. R. (2004). What is a hidden Markov model?. Nature biotechnology, 22(10), 1315-1316.
+
+Schuster‐Böckler, B., & Bateman, A. (2007). An introduction to hidden Markov models. Current protocols in bioinformatics, 18(1), A-3A.
