@@ -27,7 +27,23 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-What is a Hidden Markov Model? Why does it matter? What problem does it solve? Why did you choose this topic?
+Hidden Markov Models (HMMs) are useful tools in stochastic modeling, especially when we study data that change over time but come from processes we cannot directly observe. Many real systems work this way. 
+Examples include DNA sequences, financial trends, communication signals, and spoken language. In these situations, we only see the outcomes, while the actual states that generate them remain hidden. 
+Because the observations may also contain noise, HMMs provide a structured and mathematical way to describe how such systems behave. With their combination of probability ideas and efficient algorithms, HMMs have become widely used for analyzing sequential data.
+
+The idea behind an HMM comes from the Markov property, which says that the next state of a system depends only on its current state. Rabiner’s well-known 1989 paper helped define the modern framework by clearly separating the hidden Markov chain from the emission process that produces the observations. Thinking about HMMs in this way leads to three key questions:
+
+1:How likely is a given sequence of observations?
+2:Which hidden states most likely produced the sequence?
+3:How can we learn the model parameters from data alone?
+
+These questions correspond to the Forward–Backward algorithm, the Viterbi method, and the Baum–Welch procedure.
+
+# Project Overview
+
+In this project, we study HMMs from both theoretical and computational perspectives. We begin by defining the model structure and explaining the three main inference problems. 
+After discussing the theory, we introduce the algorithms that solve these problems. We then use R to run simulations, estimate the model parameters, and recover the hidden states. 
+By combining mathematical reasoning with practical computation, this project shows how HMMs can reveal hidden patterns in sequential data and why they are an important tool in stochastic process analysis.
 
 # Basic Theory of Hidden Markov Chains
 
