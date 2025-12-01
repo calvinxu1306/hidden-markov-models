@@ -761,54 +761,27 @@ The log-likelihood values printed in `bw_res$loglik` show how the likelihood imp
 
 # Applications
 
-Hidden Markov Models have become a fundamental tool in any domain where the underlying process evolves over time but cannot be directly observed. Because HMMs naturally separate the **hidden state dynamics** from the **observable outputs**, they are widely used in areas involving temporal, sequential, or noisy data. Below are several representative applications.
+Hidden Markov Models show up in many areas, especially in situations where we see a sequence of observations but don’t actually know the true underlying process. Over time We’ve come across examples from very different fields, and although the details vary a lot, the general idea—hidden states that evolve and noisy observations—keeps showing up. Below we describe several cases where HMMs are commonly used or where I’ve personally seen them applied.
 
 ## 1. Speech Recognition
 
-One of the earliest and most influential uses of HMMs is in automatic speech recognition. The hidden states represent phonemes or sub-phonetic units, while the observations correspond to acoustic feature vectors. The forward, Viterbi, and Baum–Welch algorithms collectively allow a computer to decode the most likely spoken words given a sequence of noisy audio frames.
+Probably the most familiar example is speech recognition. Earlier systems relied heavily on HMMs, since spoken audio is basically a long sequence of short frames. The hidden states were phonemes or smaller acoustic pieces, and the observations were feature vectors obtained from the sound signal. Using the forward scores and Viterbi paths, these systems could map a noisy waveform to a sequence of likely sounds. Even though today’s systems use deep learning almost everywhere, a lot of the older ideas still rest on the same structure as an HMM.
 
 ## 2. Natural Language Processing
 
-HMMs are used in tasks where linguistic structure unfolds over time, including:
-
--   Part-of-speech tagging\
--   Named entity recognition\
--   Language modeling\
--   Sentence segmentation
-
-In these tasks, the hidden state often corresponds to a syntactic or semantic label, while the observed sequence consists of words.
+In language-related tasks, text comes in a sequence, so it’s natural to think about hidden labels that change along with it. Typical examples include part-of-speech tagging, named-entity tagging, or segmenting sentences. The words themselves are observed, but the grammatical roles or semantic labels are what we want to infer. HMMs were used for these tasks before neural models became standard, and they are still a reasonable choice in low-resource settings or when interpretability matters.
 
 ## 3. Bioinformatics and Computational Biology
 
-HMMs play a major role in analyzing DNA and protein sequences. Notable applications include:
-
--   Gene prediction\
--   Protein family identification (e.g., Pfam)\
--   Detecting conserved genomic regions\
--   Sequence alignment
-
-In this setting, the hidden states represent biological structure (exons, introns, motifs), while the observations are nucleotide or amino acid sequences.
+Biological sequences—DNA or proteins—look like long strings of symbols with patterns that repeat in certain regions. HMMs are very effective in that environment. For instance, profile HMMs are used to represent protein families, and they work surprisingly well for detecting remote evolutionary relationships. There are also models for gene prediction, where hidden states represent exons, introns, and other structural parts. The observations are simply the letters in the sequence, but the underlying biological roles are not directly visible.
 
 ## 4. Finance and Economics
 
-HMMs are used to model latent market conditions such as:
-
--   Bull/bear regimes\
--   Volatility states\
--   Hidden risk factors
-
-Observed variables may include returns, volume, or volatility measures. The model can capture transitions between economic conditions and helps in prediction, risk analysis, and asset allocation.
+Financial data often seems noisy, but people have long argued that markets move through different “regimes.” These regimes—calm, volatile, crisis, recovery—aren’t directly measurable, but HMMs allow us to model them. Daily or weekly returns become the observed sequence, and the hidden states represent the underlying market condition. Once the states are inferred, researchers look at regime changes, volatility clustering, and risk behavior. The model is far from perfect, but it often captures broad shifts that are difficult to see with simpler tools.
 
 ## 5. Activity Recognition and Time-Series Modeling
 
-In engineering and data science, HMMs are applied to:
-
--   Human activity recognition from sensors\
--   Handwriting and gesture recognition\
--   Fault detection in mechanical systems\
--   Weather and climate modeling
-
-In each case, the observed measurements are noisy, while the underlying behavior or system state is latent.
+Modern devices collect all kinds of sensor readings, and many of them are naturally sequential. For example, accelerometer data from a phone or watch can be used to infer whether someone is walking, running, sitting, or climbing stairs. The readings themselves are noisy and inconsistent, but the activities form a more stable hidden sequence. HMMs help smooth out the noise and recover the underlying activity. A similar idea shows up in gesture recognition and even in handwriting analysis.
 
 # Conclusion
 
