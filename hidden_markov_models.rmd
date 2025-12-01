@@ -29,7 +29,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Hidden Markov Models (HMMs) come up whenever we deal with time-series data but cannot directly observe the underlying system that drives it. Many real systems work this way. Examples include DNA sequences, financial markets, communication signals, or even a simple speech recording. What is actually happening in the background is usually hidden, and the observations themselves are often quite noisy. Because of this, HMMs provides a structured and mathematical way to describe how such systems behave. HMMs were designed exactly for that purpose, and this is probably why they ended up being used almost everywhere in sequential data analysis.
 
-The basic idea is still built on the usual Markov property: the next state depends only on the current state. What HMMs add is an extra layer where each hidden state emits an observable symbol. Rabiner’s 1989 tutorial explains this setup very cleanly, and that viewpoint is more or less what I follow here. Once the model is written down, three natural questions show up immediately:
+The basic idea is still built on the usual Markov property: the next state depends only on the current state. What HMMs add is an extra layer where each hidden state emits an observable symbol. Rabiner’s 1989 tutorial explains this setup very cleanly, and that viewpoint is more or less what we follow here. Once the model is written down, three natural questions show up immediately:
 
 1:How likely is a given sequence of observations? 2:Which hidden states most likely produced the sequence? 3:How can we learn the model parameters from data alone?
 
@@ -52,19 +52,16 @@ What makes an HMM different is that we cannot observe $X_t$ directly. Instead, e
 Two assumptions keep the model manageable:
 
 1.  **The hidden states follow a first-order Markov chain.**,\
-    This means
-    $$
+    This means $$
     P(X_{t+1} \mid X_t, X_{t-1},\ldots) = P(X_{t+1} \mid X_t).
     $$
 
 2.  **Each observation depends only on the current state.**,\
-    In other words,
-    $$ 
+    In other words, $$ 
     P(O_t \mid X_1,\ldots,X_T, O_1,\ldots,O_{t-1} = P(O_t \mid X_t).
     $$
 
-Given these assumptions, the probability of a particular hidden-state path $X = (x_1,\ldots,x_T)$ and an observation sequence $O = (O_1,\ldots,O_T)$ can be written in a very structured way: 
-$$
+Given these assumptions, the probability of a particular hidden-state path $X = (x_1,\ldots,x_T)$ and an observation sequence $O = (O_1,\ldots,O_T)$ can be written in a very structured way: $$
 P(X,O \mid \lambda)
 = \pi_{x_1} b_{x_1}(O_1)
   \prod_{t=2}^{T} a_{x_{t-1},x_t} \, b_{x_t}(O_t).
