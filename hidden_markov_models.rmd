@@ -758,11 +758,11 @@ The log-likelihood values printed in `bw_res$loglik` show how the likelihood imp
 
 # Applications
 
-Hidden Markov Models show up in many areas, especially in situations where we see a sequence of observations but don’t actually know the true underlying process. Over time We’ve come across examples from very different fields, and although the details vary a lot, the general idea—hidden states that evolve and noisy observations—keeps showing up. Below we describe several cases where HMMs are commonly used or where I’ve personally seen them applied.
+Hidden Markov Models show up in many areas, especially in situations where we see a sequence of observations but don’t actually know the true underlying process. Over time We’ve come across examples from very different fields, and although the details vary a lot, the general idea—hidden states that evolve and noisy observations—keeps showing up. Below we describe several cases where HMMs are commonly used or where we’ve personally seen them applied.
 
 ## 1. Speech Recognition
 
-Probably the most familiar example is speech recognition. Earlier systems relied heavily on HMMs, since spoken audio is basically a long sequence of short frames. The hidden states were phonemes or smaller acoustic pieces, and the observations were feature vectors obtained from the sound signal. Using the forward scores and Viterbi paths, these systems could map a noisy waveform to a sequence of likely sounds. Even though today’s systems use deep learning almost everywhere, a lot of the older ideas still rest on the same structure as an HMM.
+The most familiar example is speech recognition. Earlier systems relied heavily on HMMs, since spoken audio is basically a long sequence of short frames. The hidden states were phonemes or smaller acoustic pieces, and the observations were feature vectors obtained from the sound signal. Using the forward scores and Viterbi paths, these systems could map a noisy waveform to a sequence of likely sounds. Even though today’s systems use deep learning almost everywhere, a lot of the older ideas still rest on the same structure as an HMM.
 
 ## 2. Natural Language Processing
 
