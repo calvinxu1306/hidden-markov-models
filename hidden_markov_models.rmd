@@ -1,6 +1,6 @@
 ---
 title: "Hidden Markov Models"
-author: "First  Last Name"
+author: "Calvin Xu"
 date: "`r Sys.Date()`" #  
 output:
   pdf_document:
@@ -9,7 +9,7 @@ spacing: double
 header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
-- \fancyhead[L]{Title of Project}
+- \fancyhead[L]{Hidden Markov Models}
 - \fancyfoot[CO,CE]{}
 - \fancyfoot[LE,RO]{\thepage}
 - \usepackage{setspace}\doublespacing
